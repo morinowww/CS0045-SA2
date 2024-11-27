@@ -5,13 +5,79 @@
 #include <cmath>
 #include <iostream>
 
-//Prototypes
+// Prototypes
 void generateCircleVertices();
 
 // VBO variables
 GLuint VBOstoredVerticesID;
 GLuint VBOstoredColorsID;
-bool isRenderDisplayed = true;
+bool isRenderDisplayed = false;
+
+
+// Translate variables
+bool tinky_winky_translateR = true;
+float tinky_winky_translateValX = 0.00f;
+float tinky_winky_translateValY = 0.00f;
+float po_translateVal = 0.0f;
+float lala_translateVal = 1.0f;
+float dipsy_translateVal = 0.0f;
+
+void reshape(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(-1.0, 1.0, -1.0, 1.0); 
+    glMatrixMode(GL_MODELVIEW);
+}
+
+spinDipsy_left(){
+	dipsy_translateVal += 1.0f;
+}
+spinDipsy_right(){
+	dipsy_translateVal -= 1.0f;
+}
+
+void idle_2000(int value){
+	if (tinky_winky_translateValX == 0.050f)
+		tinky_winky_translateR = false;
+	else if (tinky_winky_translateValX == -0.050f)
+		tinky_winky_translateR = true;
+		
+    if (tinky_winky_translateR){
+		tinky_winky_translateValX += 0.010;
+		tinky_winky_translateValY += 0.005;
+	}
+	else if (!tinky_winky_translateR){
+		tinky_winky_translateValX -= 0.010;
+		tinky_winky_translateValY -= 0.005;
+	}
+    glutPostRedisplay();
+    glutTimerFunc(2000, idle_2000, 0);
+}
+
+void idle_500(int value){
+	po_translateVal += 1.0f;
+    if (po_translateVal > 360.0f) 
+		po_translateVal -= 360.0f;
+
+    glutPostRedisplay();
+    glutTimerFunc(500, idle_500, 0);
+}
+
+void mouseWheel(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON)
+		spinDipsy_left();
+	else if (button == GLUT_RIGHT_BUTTON)
+		spinDipsy_right();
+	else if (button == 3) 
+        lala_translateVal += 0.1f; 
+    else {
+        lala_translateVal -= 0.1f;
+        if (lala_translateVal < 0.1f) 
+			lala_translateVal = 0.1f; 
+    }
+    glutPostRedisplay(); 
+}
 
 GLfloat verticesVBO[] = {
 	// BG: Sky (Quad)
@@ -23,7 +89,7 @@ GLfloat verticesVBO[] = {
     // BG: Grass (Quad)
     -1.0f, -1.0f, 0.0f,  	// Bottom-left
     1.0f, -1.0f, 0.0f,  	// Bottom-right
-    1.0f,  0.0f, 0.0f,  	// Top-right
+    1.0f,  0.50f, 0.0f,  	// Top-right
     -1.0f,  0.0f, 0.0f,  	// Top-left
 
     // BG: Cloud 1 (Rectangle)
@@ -728,38 +794,41 @@ GLfloat colorsVBO[] = {
 
 void renderVerticesVBO() {
 	
-	if (isRenderDisplayed){	
-		glGenBuffers(1,&VBOstoredVerticesID);
-		glBindBuffer(GL_ARRAY_BUFFER,VBOstoredVerticesID);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(verticesVBO), verticesVBO, GL_DYNAMIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glGenBuffers(1,&VBOstoredVerticesID);
+	glBindBuffer(GL_ARRAY_BUFFER,VBOstoredVerticesID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesVBO), verticesVBO, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glGenBuffers(1,&VBOstoredColorsID);
+	glBindBuffer(GL_ARRAY_BUFFER,VBOstoredColorsID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(colorsVBO), colorsVBO, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glPointSize(20.0f);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+
+	glVertexPointer(3,GL_FLOAT,0,0);
+	glColorPointer(3,GL_FLOAT,0,0);
 	
-		glGenBuffers(1,&VBOstoredColorsID);
-		glBindBuffer(GL_ARRAY_BUFFER,VBOstoredColorsID);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(colorsVBO), colorsVBO, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	
-		glPointSize(20.0f);
-	
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-	
-		glVertexPointer(3,GL_FLOAT,0,0);
-		glColorPointer(3,GL_FLOAT,0,0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 		
-		isRenderDisplayed = false;
-	}
-	
     glLineWidth(5); 						//Set line width (scale to window size)
     
-	glDrawArrays(GL_QUADS, 0, 4);			//Draw gky
+	glDrawArrays(GL_QUADS, 0, 4);			//Draw sky
 	glDrawArrays(GL_QUADS, 4, 4);			//Draw grass
+	
+    glDrawArrays(GL_POLYGON, 286, 16);		//Draw Sun Baby
+    
     glDrawArrays(GL_QUADS, 8, 4);			//Draw clouds 1
-    glDrawArrays(GL_QUADS, 12, 4);			//Draw clouds 2
-    
-    
+    glDrawArrays(GL_QUADS, 12, 4);			//Draw clouds 2  
+
+	glPushMatrix();
+    glRotatef(po_translateVal, 0.0f, 0.0f, 1.0f); 	
     glDrawArrays(GL_LINE_LOOP, 16, 16);		//Draw Po: Head (Antenna)
     glDrawArrays(GL_LINES, 32, 2);			//Draw Po: Head (Antenna)
     glDrawArrays(GL_POLYGON, 34, 16);		//Draw Po: Head
@@ -770,8 +839,10 @@ void renderVerticesVBO() {
     glDrawArrays(GL_POLYGON, 81, 5);		//Draw Po: Arm (Right)
     glDrawArrays(GL_QUADS, 86, 4);			//Draw Po: Leg (Left)
     glDrawArrays(GL_QUADS, 90, 4);			//Draw Po: Leg (Right)
-
-
+	glPopMatrix();
+	
+	glPushMatrix();
+    glScalef(lala_translateVal, lala_translateVal, 1.0f);
     glDrawArrays(GL_LINE_STRIP, 94, 4);		//Draw Lala: Head (Antenna)
 	glDrawArrays(GL_POLYGON, 98, 16);		//Draw Lala: Head
     glDrawArrays(GL_POLYGON, 114, 16);		//Draw Lala: Head (Internal)
@@ -781,8 +852,10 @@ void renderVerticesVBO() {
     glDrawArrays(GL_POLYGON, 145, 5);		//Draw Lala: Arm (Right)
     glDrawArrays(GL_QUADS, 150, 4);			//Draw Lala: Leg (Left)
     glDrawArrays(GL_QUADS, 154, 4);			//Draw Lala: Leg (Right)
+	glPopMatrix();
 
-
+	glPushMatrix();
+	glRotatef(dipsy_translateVal, 0.0f, 0.0f, 1.0f);
     glDrawArrays(GL_LINE_STRIP, 158, 2);	//Draw Dipsy: Head (Antenna)
 	glDrawArrays(GL_POLYGON, 160, 16);		//Draw Dipsy: Head
     glDrawArrays(GL_POLYGON, 176, 16);		//Draw Dipsy: Head (Internal)
@@ -792,7 +865,10 @@ void renderVerticesVBO() {
     glDrawArrays(GL_POLYGON, 207, 5);		//Draw Dipsy: Arm (Right)
     glDrawArrays(GL_QUADS, 212, 4);			//Draw Dipsy: Leg (Left)
     glDrawArrays(GL_QUADS, 216, 4);			//Draw Dipsy: Leg (Right)
-    
+    glPopMatrix();
+
+	glPushMatrix();  
+	glTranslatef(tinky_winky_translateValX, tinky_winky_translateValY, 0.0f);    
     glDrawArrays(GL_LINE_LOOP, 220, 3);		//Draw Tink-Winky: Head (Antenna)
     glDrawArrays(GL_LINE_STRIP, 223, 3);	//Draw Tink-Winky: Head (Antenna)
 	glDrawArrays(GL_POLYGON, 226, 16);		//Draw Tink-Winky: Head
@@ -803,8 +879,7 @@ void renderVerticesVBO() {
     glDrawArrays(GL_POLYGON, 273, 5);		//Draw Tink-Winky: Arm (Right)
     glDrawArrays(GL_QUADS, 278, 4);			//Draw Tink-Winky: Leg (Left)
     glDrawArrays(GL_QUADS, 282, 4);			//Draw Tink-Winky: Leg (Right)
-    
-	glDrawArrays(GL_POLYGON, 286, 16);		//Draw Tink-Winky: Head
+	glPopMatrix();
 }
 
 void display() {
@@ -822,9 +897,14 @@ int main(int argc, char** argv) {
 
     // Initialize GLEW
     glewInit();
+    
     // Register display callback
     glutDisplayFunc(display);
-
+    glutReshapeFunc(reshape);
+    glutTimerFunc(2000, idle_2000, 0);
+    glutTimerFunc(500, idle_500, 0);
+    glutMouseFunc(mouseWheel);
+    
     // Enter the main loop
     glutMainLoop();
     return 0;
