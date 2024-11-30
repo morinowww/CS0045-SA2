@@ -13,14 +13,19 @@ GLuint VBOstoredVerticesID;
 GLuint VBOstoredColorsID;
 bool isRenderDisplayed = false;
 
-
 // Translate variables
+float frequency = 2.0f;
+float amplitude = 0.5f;
+
+float currentTime;
+
 bool tinky_winky_translateR = true;
 float tinky_winky_translateValX = 0.00f;
 float tinky_winky_translateValY = 0.00f;
 float po_translateVal = 0.0f;
 float lala_translateVal = 1.0f;
 float dipsy_translateVal = 0.0f;
+float sunBaby_translateVal;
 
 void reshape(int w, int h) {
     glViewport(0, 0, w, h);
@@ -33,6 +38,7 @@ void reshape(int w, int h) {
 spinDipsy_left(){
 	dipsy_translateVal += 1.0f;
 }
+
 spinDipsy_right(){
 	dipsy_translateVal -= 1.0f;
 }
@@ -62,6 +68,13 @@ void idle_500(int value){
 
     glutPostRedisplay();
     glutTimerFunc(500, idle_500, 0);
+}
+
+void idle_60fps(int value){
+	currentTime = glutGet(GLUT_ELAPSED_TIME) / 4000.0f;
+	sunBaby_translateVal = amplitude * sin(2 * M_PI * frequency * currentTime);
+    glutPostRedisplay();
+    glutTimerFunc(16, idle_60fps, 0);
 }
 
 void mouseWheel(int button, int state, int x, int y) {
@@ -696,7 +709,6 @@ GLfloat colorsVBO[] = {
     0.0f, 1.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
     
-    
 	//Tink-Wink: Head (Antenna)
 	0.5f, 0.0f, 1.0f,
 	0.5f, 0.0f, 1.0f,
@@ -793,7 +805,6 @@ GLfloat colorsVBO[] = {
 };
 
 void renderVerticesVBO() {
-	
 	glGenBuffers(1,&VBOstoredVerticesID);
 	glBindBuffer(GL_ARRAY_BUFFER,VBOstoredVerticesID);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesVBO), verticesVBO, GL_DYNAMIC_DRAW);
@@ -816,13 +827,16 @@ void renderVerticesVBO() {
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-		
+	
     glLineWidth(5); 						//Set line width (scale to window size)
     
 	glDrawArrays(GL_QUADS, 0, 4);			//Draw sky
 	glDrawArrays(GL_QUADS, 4, 4);			//Draw grass
 	
+	glPushMatrix();
+	glTranslatef (0.0f, sunBaby_translateVal, 0.0f);
     glDrawArrays(GL_POLYGON, 286, 16);		//Draw Sun Baby
+    glPopMatrix();
     
     glDrawArrays(GL_QUADS, 8, 4);			//Draw clouds 1
     glDrawArrays(GL_QUADS, 12, 4);			//Draw clouds 2  
@@ -904,6 +918,8 @@ int main(int argc, char** argv) {
     glutTimerFunc(2000, idle_2000, 0);
     glutTimerFunc(500, idle_500, 0);
     glutMouseFunc(mouseWheel);
+    glutTimerFunc(0, idle_60fps, 0);
+
     
     // Enter the main loop
     glutMainLoop();
